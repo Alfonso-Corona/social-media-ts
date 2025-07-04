@@ -1,8 +1,13 @@
 import { useState } from "react";
 import { Link } from "react-router";
+import { useAuth } from "../context/AuthContext";
 
 export const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
+  const { signInWithGitHub, signOut, user } = useAuth();
+
+  const displayName = user?.user_metadata.user_name || user?.email;
+
   return (
     <nav className="fixed top-0 w-full z-40 bg-[rgba(10,10,10,0.8)] backdrop-blur-lg border-b border-white/10 shadow-lg">
       <div className="max-w-5xl mx-auto px-4">
@@ -38,6 +43,34 @@ export const Navbar = () => {
             </Link>
           </div>
 
+          <div className="hidden md:flex items-center">
+            {user ? (
+              <div className="flex items-center space-x-4">
+                {user.user_metadata.avatar_url && (
+                  <img
+                    src={user.user_metadata.avatar_url}
+                    alt="User Avatar"
+                    className="w-8 h-8 rounded-full object-cover"
+                  />
+                )}
+                <span className="text-gray-300">{displayName}</span>
+                <button
+                  onClick={signOut}
+                  className="bg-red-500 px-3 py-1 rounded"
+                >
+                  Sign Out
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={signInWithGitHub}
+                className="bg-blue-500 px-3 py-1 rounded"
+              >
+                Sign In With{" "}
+              </button>
+            )}
+          </div>
+          
           <div className="md:hidden">
             <button
               onClick={() => setMenuOpen((prev) => !prev)}
@@ -70,10 +103,6 @@ export const Navbar = () => {
             </button>
           </div>
         </div>
-      </div>
-
-      <div>
-        <button>Sign In With </button>
       </div>
 
       {menuOpen && (
