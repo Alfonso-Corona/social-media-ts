@@ -1,10 +1,12 @@
 import { useState, type ChangeEvent } from "react";
 import { supabase } from "../supabase-client";
 import { useMutation } from "@tanstack/react-query";
+import { useAuth } from "../context/AuthContext";
 
 interface PostInput {
   title: string;
   content: string;
+  avatar_url: string | null;
 }
 
 const createPost = async (post: PostInput, imageFile: File) => {
@@ -34,6 +36,8 @@ export const CreatePost = () => {
   const [content, setContent] = useState<string>("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
+  const { user } = useAuth();
+
   const { mutate, isPending, isError } = useMutation({
     mutationFn: (data: { post: PostInput; imageFile: File }) => {
       return createPost(data.post, data.imageFile);
@@ -42,7 +46,14 @@ export const CreatePost = () => {
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     if (!selectedFile) throw new Error("seleeciones una image valida");
-    mutate({ post: { title, content }, imageFile: selectedFile });
+    mutate({
+      post: {
+        title,
+        content,
+        avatar_url: user?.user_metadata.avatar_url || null,
+      },
+      imageFile: selectedFile,
+    });
   };
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -65,7 +76,9 @@ export const CreatePost = () => {
         />
       </div>
       <div>
-        <label htmlFor="content" className="block mb-2 font-medium">Content</label>
+        <label htmlFor="content" className="block mb-2 font-medium">
+          Content
+        </label>
         <textarea
           id="content"
           required
@@ -74,7 +87,9 @@ export const CreatePost = () => {
         ></textarea>
       </div>
       <div>
-        <label htmlFor="image" className="block mb-2 font-medium">Upload Image</label>
+        <label htmlFor="image" className="block mb-2 font-medium">
+          Upload Image
+        </label>
         <input
           type="file"
           id="image"
@@ -84,7 +99,12 @@ export const CreatePost = () => {
           className="w-full text-gray-200"
         />
       </div>
-      <button type="submit" className="bg-purple-500 text-white px-4 py-2 rounded cursor-pointer">{isPending ? "Creating..." : "Create Post"}</button>
+      <button
+        type="submit"
+        className="bg-purple-500 text-white px-4 py-2 rounded cursor-pointer"
+      >
+        {isPending ? "Creating..." : "Create Post"}
+      </button>
       {isError && <p className="text-red-500">Error creatig post</p>}
     </form>
   );
