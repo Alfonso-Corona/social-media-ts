@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../supabase-client";
 import type { Post } from "./PostList";
 import { LikeButton } from "./LikeButton";
+import { CommentSection } from "./CommentSection";
 
 interface Props {
   postId: number;
@@ -23,8 +24,6 @@ export const PostDetail = ({ postId }: Props) => {
     queryKey: ["posts", postId],
     queryFn: () => fetchPostById(postId),
   });
-
-  console.log(data);
 
   if (isLoading) {
     return <div> Loading... </div>;
@@ -52,6 +51,7 @@ export const PostDetail = ({ postId }: Props) => {
         Posted on: {new Date(data!.created_at).toLocaleDateString()}
       </p>
       <LikeButton postId={postId}/>
+      <CommentSection postId={postId}/>
     </div>
   );
 };
