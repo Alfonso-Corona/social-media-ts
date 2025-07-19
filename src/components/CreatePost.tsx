@@ -1,12 +1,14 @@
 import { useState, type ChangeEvent } from "react";
 import { supabase } from "../supabase-client";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useAuth } from "../context/AuthContext";
+import { fetchCommunities, type Community } from "./CommunityList";
 
 interface PostInput {
   title: string;
   content: string;
   avatar_url: string | null;
+  community_id?: null | number;
 }
 
 const createPost = async (post: PostInput, imageFile: File) => {
@@ -34,9 +36,15 @@ const createPost = async (post: PostInput, imageFile: File) => {
 export const CreatePost = () => {
   const [title, setTitle] = useState<string>("");
   const [content, setContent] = useState<string>("");
+  const [comunityId, setComunityId] = useState<number | null>()
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const { user } = useAuth();
+
+  const { data: communities } = useQuery<Community[], Error>({
+    queryKey: ["communities"],
+    queryFn: fetchCommunities,
+  });
 
   const { mutate, isPending, isError } = useMutation({
     mutationFn: (data: { post: PostInput; imageFile: File }) => {
@@ -44,13 +52,14 @@ export const CreatePost = () => {
     },
   });
   const handleSubmit = (event: React.FormEvent) => {
-    event.preventDefault();
+    event.preventDefault(); 
     if (!selectedFile) throw new Error("seleeciones una image valida");
     mutate({
       post: {
         title,
         content,
         avatar_url: user?.user_metadata.avatar_url || null,
+        community_id: comunityId
       },
       imageFile: selectedFile,
     });
@@ -59,6 +68,11 @@ export const CreatePost = () => {
     if (e.target.files && e.target.files[0]) {
       setSelectedFile(e.target.files[0]);
     }
+  };
+
+  const handleCommunityChange = (e: ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    setComunityId(value ? Number(value) : null);
   };
 
   return (
@@ -86,6 +100,19 @@ export const CreatePost = () => {
           className="w-full border border-white/10 bg-transparent p-2 rounded"
         ></textarea>
       </div>
+
+      <div>
+        <label>Select Community</label>
+        <select id="community" onChange={handleCommunityChange}>
+          <option value={""}>-- Choose one --</option>
+          {communities?.map((community, key) => (
+            <option key={key} value={community.id}>
+              {community.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
       <div>
         <label htmlFor="image" className="block mb-2 font-medium">
           Upload Image
